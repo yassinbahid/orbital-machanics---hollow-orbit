@@ -1,0 +1,336 @@
+\documentstyle[a4,11pt,iso8859,fleqn]{article} 
+\input{noindent} 
+\input{hyphen} 
+\newcommand{\va}{{\bf a}} 
+\newcommand{\vb}{{\bf b}} 
+\newcommand{\vx}{{\bf x}} 
+\title{Heltallsprogrammering} 
+\author{Ingar Solberg} 
+\begin{document} 
+\maketitle 
+\section{Innledning} 
+Ser på problemet 
+\begin{equation} 
+	\min_{\vx} f(\vx) 
+\end{equation} 
+\begin{equation} 
+	\vx \in S \label{bibet} 
+\end{equation} 
+Bibetingelsene i (\ref{bibet}) kan ha flere former 
+\begin{eqnarray} 
+	h_i(\vx) & = & 0\\ 
+	g_i(\vx) & \leq & 0\\ 
+        x_i & \in & \{ x_{i1},x_{i2} \ldots x_{iN_i} \} \label{helbibet} 
+\end{eqnarray} 
+gjerne i kombinasjon.  I de tilfellene en eller flere av bibetingelsene 
+er av formen (\ref{helbibet}) har vi et heltallsprogrammeringsproblem. 
+Vi kan tenke oss indeksene i mengden som heltall, der vi skal finne 
+den $j$ som gjør at $x_{i} = x_{ij}$ gir den optimale løsningen. 
+ 
+I mange tilfelle vil det bare være to elementer (f.eks. $\{ 0, 1 \}$). 
+ 
+Avhengig av om $f$, $h$ og $g$ er lineære eller ulineære kaller en problemer 
+LP (Linear Program) eller NLP (NonLinear Program).  Hvis dette kombineres 
+med bibetingelser på formen (\ref{helbibet}) får en MILP (Mixed Integer 
+Linear Program) og MINLP (Mixed Integer Nonlinear Program).  Rene  
+heltallsproblemer kalles gjerne IP (Integer Program) mens de der 
+bare 0 og 1 er lovlig kalles BIP (Binary Integer Program). 
+ 
+Blant de klassiske heltallsproblemene finner vi ``the travelling salesman'' 
+der en selger skal besøke et antall byer langs den korteste vei. 
+Et annet er ``the knapsack problem'' der en har mange gjenstander av 
+forskjellig vekt og verdi.  Problemet er å velge gjenstander slik at en 
+får med seg mest mulig verdi innenfor en oppgitt vektgrense. 
+ 
+Heltallsproblemer vil ofte være tidkrevende å løse da en får svært 
+mange mulige kombinasjoner.   
+Med 10 binære variable får en 1024 kombinasjoner. 
+En må da enten teste alle muligheter eller 
+finne metoder (avskjæring) slik at en kan kutte ut detaljert testing 
+av grupper av kombinasjoner. 
+ 
+Det finnes spesielle algoritmer for de forskjellige typene av  
+heltallsproblemer.  I dette korte notatet vil bare en metode 
+bli gjennomgått i detalj. 
+ 
+ 
+\section{Avrunding} 
+En mulig løsningsmetode for et slikt problem er først å løse det som et 
+optimaliseringsproblem der $x_i$ kan variere fritt, og så til slutt 
+sette inn den $x_{ij}$ som er nærmest den $x_i$ en har funnet. 
+ 
+Dette vil ofte fungere bra dersom det er relativt liten 
+avstand mellom elementene i mengden.  Hvis det er langt mellom 
+alternativene er sjansen stor for at en bare finner en 
+suboptimal løsning. 
+ 
+\section{Prøve alle muligheter} 
+Da det er et endelig antall mulige verdier for $x_i \forall i \in W$  
+kan en prøve 
+alle mulighetene.  Hvis det er flere $x_i$ som bare kan anta diskrete 
+verdier vil dette fort gi ganske mange kombinasjoner som alle må testes. 
+ 
+Antar en at 10 komponenter hver kan anta 2 verdier får en 1024 kombinasjoner. 
+En får dermed 1024 problemer der en skal minimalisere mhp de delene av $\vx$ 
+som fortsatt kan variere fritt. 
+ 
+\section{Rekursiv problemløsning} 
+Denne teknikken som her skal presenteres  
+har på engelsk betegnelsen ``branch-and=bound''. 
+ 
+For enkelhets skyld ser vi bare på problemer på formen 
+\begin{equation} 
+	\min_{\vx} f(\vx) \label{orgkrit} 
+\end{equation} 
+\begin{equation} 
+        x_i \in \{ x_{i1},x_{i2} \ldots x_{iN_i} \} \forall i \in W \label{orghelbibet} 
+\end{equation} 
+Der $W$ er en undermengde av $\{ 1,2, \ldots n\} $.  Utvidelse til mer 
+generelle problemer er relativt enkelt. 
+ 
+Vi antar i det følgende at elementene $x_{ij}$ i  
+$ \{ x_{i1},x_{i2} \ldots x_{iN} \} $ er sortert i stigende rekkefølge. 
+ 
+Vi skal nå vise en metode som under visse betingelser finner den 
+optimale løsningen uten at alle kombinasjoner nødvendigvis må prøves. 
+ 
+Definerer først funksjonene 
+\begin{equation} 
+   g(\va,\vb) = \min_{\vx} \{ f(\vx) : \va \leq \vx \leq \vb \} 
+\end{equation} 
+\begin{equation} 
+   h(\va,\vb) = \min_{\vx} \{ f(\vx) : \va \leq \vx \leq \vb, 
+        x_i \in \{ x_{i1},x_{i2} \ldots x_{iN_i} \} \forall i \in W \} 
+\end{equation} 
+Der $\va$ og $\vb$ inneholder nedre henholdsvis øvre grenser for de 
+variable. (Grensene kan være $-\infty$ og $+\infty$).  En har her 
+\begin{equation} 
+   h(\va,\vb) \geq g(\va,\vb) \label{hgeqg} 
+\end{equation} 
+ 
+I utgangspunktet starter en med at $\va$ og  $\vb$ inneholder de 
+høyeste og laveste mulige verdiene.   
+$h(\va,\vb)$ vil da gi løsningen på problemet (\ref{orgkrit},\ref{orghelbibet}). 
+Vi starter med å beregne $g(\va,\vb)$ og den 
+tilhørende verdi av $\vx$.  Ser videre på en av komponentene i denne,  
+$x_i$ som bare kan anta visse verdier.  Finner $j$ slik at 
+$x_{ij} \leq x_i \leq x_{i,j+1}$. 
+ 
+Vi kan nå sette opp to underproblemer av samme type.  I det første 
+setter en $b_i = x_{ij}$ og i det andre setter en $a_i = x_{i,j+1}$, mens 
+de andre elementene ikke endres. 
+En får her to problemer med bibetingelser henholdsvis $\vx \in S_1$ og 
+$\vx \in S_2$ der $S_1$ og $S_2$ er disjunkte mengder ($S_1 \cap S_2 = \emptyset$).  Den optimale 
+løsningen må ligge i en av disse mengdene: 
+\begin{equation} 
+   h(\va,\vb) = \min ( h(\va,\vb_1), h(\va_2,\vb) ) \label{rekformel} 
+\end{equation} 
+der $\vb_1$ og $\va_2$ inneholder de nye grensene.  En har her to problemer 
+med samme form som (\ref{orghelbibet}).   
+Disse kan vi så angripe på samme måte. 
+Dermed kan vi ved rekursjon stadig 
+bryte ned problemet i mindre delproblemer inntil vi finner løsninger 
+der  
+\begin{equation} 
+g(\va_i,\vb_i) = h(\va_i,\vb_i) \label{termkrit} 
+\end{equation} 
+Den av disse løsningene 
+som gir den minste verdien på $h$ gir så løsningen på det opprinnelige 
+problemet. 
+ 
+For at metoden skal fungere må de delproblemene som inngår i beregninga 
+av $g$ bare ha ett lokalt og globalt minimum.  Dette må gjelde på alle trinn 
+i løsningsprosessen.  
+ 
+Ved hjelp av denne metoden har vi sannsynligvis spart oss for å prøve 
+de fleste av de mange mulige kombinasjonene.   
+\subsection{Søkestrategi} 
+Hittil har vi utført rekursjonen i full dybde i alle greiner ut i fra 
+(\ref{rekformel}) inntil vi tilfredsstiller (\ref{termkrit}). 
+ 
+Ved å følge en dybde-først strategi med avskjæring basert på (\ref{hgeqg}) 
+kan vi sannsynligvis spare oss for mye regnearbeid. 
+ 
+Algoritmen for dette blir: 
+ 
+function $h(\va,\vb,h_{min})$ 
+\begin{enumerate} 
+\vspace{-2ex} 
+\item Finn $g(\va,\vb)$ og tilhørende $\vx$ 
+\item Hvis alle bibetingelser er tilfredsstilt: returner $h:=g$ 
+      og tilhørende $\vx$. 
+\item Hvis $g > h_{min}$ eller ingen mulig løsning:  
+        returner $h:=\infty$ (avskjæring) 
+\item Finn øvre og nedre grenser for de to delproblemene. \label{defdel} 
+\item Løs et av dem ved rekursivt kall: $h_1:=h(\va_1,\vb_1,h_{min})$ \label{losdel} 
+\item Hvis $h_1<h_{min}$ : $h_{min} := h_1$ 
+\item Løs det andre delproblemet ved rekursivt kall:  
+      $h_2:=h(\va_2,\vb_2,h_{min})$ 
+\item Returner $h:=\min(h_1,h_2)$ og tilhørende $\vx$ 
+\end{enumerate} 
+ 
+Når det gjelder å velge hvilket delproblem som skal løses først 
+kan det lønne seg å beregne $g$ for begge delproblemer, og så løse 
+først det problemet som ga den minste $g$.   
+Dette må legges inn i algoritmen mellom trinn \ref{defdel} og \ref{losdel}. 
+Informasjonen fra 
+beregninga av $g$ overføres i kallet av $h$ slik at trinn 1 i algoritmen over 
+utgår. 
+ 
+Under veis vil en ha tilfeller der en må velge hvilken $(x_i : i \in W)$ en vil 
+angripe for å splitte opp problemet.  Det kan her lønne seg å velge den 
+der avstanden mellom de lovlige verdiene er størst.  En annen enkel strategi 
+er å velge laveste indeks. 
+ 
+\subsection{Formulering av det kontinuerlige problemet} 
+For at metoden skal garantere optimal løsning må $g$ være slik at det 
+kun finnes ett lokalt og globalt minimum uansett hvilke grenser 
+en setter for de variable.  I de tilfeller der det bare er snakk om 
+diskretisering av et kontinuerlig problem er dette ofte tilfredsstilt. 
+ 
+Verre blir det der problemet er mer diskret av natur, f.eks.  
+``the travelling salesman''.  En må her formulere et kontinuerlig problem 
+ut i fra et diskret.  Dette kan være vanskelig dersom de ovennevnte 
+krav til $g$ skal oppfylles. 
+\section{Eksempel} 
+Vi tar utgangspunkt i eksemplet med 3 tankreaktorer i serie.  Disse 
+tankene leveres i 9 størrelser, svarende til tidskonstanter $\theta$ på 
+100, 200, 300, 400, 500, 600, 700, 800 og 900 sekunder.  Utgangskonsentrasjonen 
+fra den siste av disse skal minimaliseres. 
+ 
+Vi skal finne det beste valget når vi samtidig krever at totalvolumet 
+skal svare til at summen av tidskonstantene er mindre enn 925s. 
+(Det hadde vært bedre her å velge 900s.  925 er valg for at søkesekvensen 
+skal illustrere metoden bedre.) 
+ 
+Problemet er skalert ved at alle tidskonstanter er dividert med 100 slik 
+at de er i området 1-9.  I hver ramme står subproblemets nummer, grensene for hver tidskonstant, 
+og den optimale verdi som er funnet.  Nederst står den resulterende 
+utgangskonsentrasjonen. 
+Vi starter med alle muligheter åpne, og begrenser etter hvert til det 
+laveste av intervallene: 
+ 
+\fbox{\begin{tabular}{cc}1\\1-9&1.7\\1-9&3.0\\1-9&4.6\\ \multicolumn{2}{c}{ 0.5068 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}2\\1-1&1.0\\1-9&3.2\\1-9&5.0\\ \multicolumn{2}{c}{ 0.5128 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}3\\1-1&1.0\\1-3&3.0\\1-9&5.2\\ \multicolumn{2}{c}{ 0.5131 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}4\\1-1&1.0\\1-3&3.0\\1-5&5.0\\ \multicolumn{2}{c}{ 0.5206 
+}\end{tabular}} 
+ 
+Vi har her funnet den første mulige løsningen, og merker oss utgangskonsentrasjonen.   
+ 
+Vi går så tilbake og sjekker de andre mulighetene under problem 3: 
+ 
+\fbox{\begin{tabular}{cc}5\\1-1&1.0\\1-3&2.2\\6-9&6.0\\ \multicolumn{2}{c}{ 0.5190 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}6\\1-1&1.0\\1-2&2.0\\6-9&6.2\\ \multicolumn{2}{c}{ 0.5231 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}7\\1-1&0.8\\3-3&2.8\\6-9&5.8\\ \multicolumn{2}{c}{ 0.5102 
+}\end{tabular}} 
+ 
+Underproblemer til 6 behøver vi ikke sjekke da utgangskonsentrasjonen allerede 
+er høyere enn den beste mulige som vi hittil har funnet.  Subproblem 7 har 
+ingen mulig løsning.  Legg merke til underproblemene til 5 er laget ved 
+å snevre inn på intervallet for tank 2 en gang til. 
+ 
+Vi må så sjekke de andre underproblemene til 2: 
+ 
+\fbox{\begin{tabular}{cc}8\\1-1&1.0\\4-9&4.0\\1-9&4.2\\ \multicolumn{2}{c}{ 0.5164 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}9\\1-1&1.0\\4-9&4.2\\1-4&4.0\\ \multicolumn{2}{c}{ 0.5190 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}10\\1-1&1.0\\4-4&4.0\\1-4&4.0\\ \multicolumn{2}{c}{ 0.5253 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}11\\1-1&1.0\\5-9&5.0\\1-4&3.2\\ \multicolumn{2}{c}{ 0.5311 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}12\\1-1&0.8\\4-9&3.8\\5-9&4.8\\ \multicolumn{2}{c}{ 0.5099 
+}\end{tabular}} 
+ 
+Her gir 10 en mulig men ikke optimal løsning.  Underproblemer til 11 kan vi  
+droppe da konsentrasjonen allerede er for høy.   
+Problem 12 har ingen mulig løsning. 
+ 
+Vi må så sjekke det andre underproblemet til 1: 
+ 
+\fbox{\begin{tabular}{cc}13\\2-9&2.0\\1-9&2.9\\1-9&4.4\\ \multicolumn{2}{c}{ 0.5076 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}14\\2-9&2.0\\1-2&2.0\\1-9&5.2\\ \multicolumn{2}{c}{ 0.5139 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}15\\2-9&2.3\\1-2&2.0\\1-5&5.0\\ \multicolumn{2}{c}{ 0.5148 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}16\\2-2&2.0\\1-2&2.0\\1-5&5.0\\ \multicolumn{2}{c}{ 0.5214 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}17\\3-9&3.0\\1-2&2.0\\1-5&4.2\\ \multicolumn{2}{c}{ 0.5224 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}18\\2-9&2.0\\1-2&1.2\\6-9&6.0\\ \multicolumn{2}{c}{ 0.5332 
+}\end{tabular}} 
+ 
+Her gir 16 en mulig men ikke optimal løsning.  Underproblemene til 17 og 18  
+slipper vi å teste da konsentrasjonen er for høy allerede. 
+ 
+Nå sjekker vi det andre underproblemet til 13: 
+ 
+\fbox{\begin{tabular}{cc}19\\2-9&2.0\\3-9&3.0\\1-9&4.2\\ \multicolumn{2}{c}{ 0.5077 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}20\\2-9&2.0\\3-9&3.2\\1-4&4.0\\ \multicolumn{2}{c}{ 0.5086 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}21\\2-9&2.2\\3-3&3.0\\1-4&4.0\\ \multicolumn{2}{c}{ 0.5098 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}22\\2-2&2.0\\3-3&3.0\\1-4&4.0\\ \multicolumn{2}{c}{ 0.5165 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}23\\3-9&3.0\\3-3&3.0\\1-4&3.2\\ \multicolumn{2}{c}{ 0.5216 
+}\end{tabular}} 
+ 
+Her er 22 en ny og bedre mulig løsning.  Underproblemer til 23 kan vi utelukke. 
+ 
+Vi må så sjekke underproblemene til 20 og 19: 
+ 
+\fbox{\begin{tabular}{cc}24\\2-9&2.0\\4-9&4.0\\1-4&3.2\\ \multicolumn{2}{c}{ 0.5161 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}25\\2-9&2.2\\4-9&4.0\\1-3&3.0\\ \multicolumn{2}{c}{ 0.5198 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}26\\2-9&1.8\\4-9&3.8\\4-4&3.8\\ \multicolumn{2}{c}{ 0.5022 
+}\end{tabular}} 
+\fbox{\begin{tabular}{cc}27\\2-9&1.8\\3-9&2.8\\5-9&4.8\\ \multicolumn{2}{c}{ 0.4986 
+}\end{tabular}} 
+ 
+Underproblemene til 25 kan vi utelukke, mens 26 og 27 ikke har noen mulig 
+løsning. 
+
+ 
+Vi har undersøkt 27 problemer, hvorav 4 ga mulige løsninger.  6 ga 
+grunnlag for avskjæring, og 4 var uten mulig løsning. 
+ 
+Dersom vi i stedet hadde spesifisert 900 som total tidskonstant hadde 
+vi sluppet unna med følgende 7 problemer: 
+ 
+\fbox{\begin{tabular}{cc}1\\1-9&1.6\\1-9&2.9\\1-9&4.4\\ \multicolumn{2}{c}{ 0.5149
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}2\\1-1&1.0\\1-9&3.1\\1-9&4.9\\ \multicolumn{2}{c}{ 0.5205
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}3\\1-1&1.0\\1-3&3.0\\1-9&5.0\\ \multicolumn{2}{c}{ 0.5206
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}4\\1-1&1.0\\4-9&4.0\\1-9&4.0\\ \multicolumn{2}{c}{ 0.5253
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}5\\2-9&2.0\\1-9&2.8\\1-9&4.2\\ \multicolumn{2}{c}{ 0.5161
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}6\\2-9&2.0\\1-2&2.0\\1-9&5.0\\ \multicolumn{2}{c}{ 0.5214
+}\end{tabular}}
+\fbox{\begin{tabular}{cc}7\\2-9&2.0\\3-9&3.0\\1-9&4.0\\ \multicolumn{2}{c}{ 0.5165
+}\end{tabular}}
+
+ 
+Det totale antall kombinasjoner blir $9^3$, hvorav ca $1/6$ er mulige. 
+Vi har dermed spart oss for ganske mange forsøk. 
+ 
+Det er som en ser ikke så veldig stor forskjell på om en må holde seg 
+til spesielle volumer eller kan velge fritt.  En rørreaktor med samme volum 
+ville til sammenlikning gitt en utgangskonsentrasjon på 0.2411.  Dette svarer 
+til et uendelig antall små tanker. 
+\end{document} 
+ 
+ 
+
+

@@ -1,0 +1,79 @@
+% PCR3B Time - Optimal Control Code Initialization Script
+
+% Initial Conditions (Beginning State of Vehicle: [x, y, vx, vy]
+
+global X0
+% x0 = 0.244647414873717;
+% y0 = 0.836089636635792;
+% vx0 = 1.142126232466290;
+% vy0 = 0.489143510530548;
+% 
+% X0=[x0,y0,vx0,vy0]';
+% Halo size and location parameters
+r = 0.001;, alpha = 0;,n_lib = 2;, n_eig=2;
+global LN
+[X0,V_R,V_I,b,LN]=LinearSysEigs_F(r,alpha,n_lib,n_eig);
+
+% Fixed Final Time
+global TF
+TF = 2*pi/b; %linearized orbit period
+
+% Final Conditions (vehicle State at end of thrust)
+global XF
+% Position coordinates of (Halo or other) target orbit:
+% xf = 0.461469276058880;
+% yf = 0.866791033893503; 
+% Vx = 0.000000377737727;
+% Vy = -0.000000382078206;
+
+% xf =  0.71927; 
+% yf =  0.48576;
+% Vx = -0.49203;
+% Vy = -0.41552;
+
+% xf =  0.698472936688591;
+% yf =  0.44314259522911;
+% Vx = -0.395590330687497;
+% Vy = -0.448012421439155;
+% 
+% XF = [xf,yf,Vx,Vy]';
+XF = X0; % Periodic BC
+
+% Global Thrust Variable and Value
+
+global TH
+TH = 1;
+
+% Reduced Mass Parameter mu = m1/(m1+m2)
+global U
+U = 1/82.45;
+
+
+%____________________________________________________________________
+
+% ALGORITHM PARAMETERS
+%____________________________________________________________________
+
+
+% Trajectory Plot Switch (= 0 for off)
+
+global PLOTON
+PLOTON = 0;
+
+% Set Integrator Options
+
+% Numerical Integrator Relative and Absolute Error Tolerances
+global TOLR TOLA
+TOLR = 1.e-12;
+TOLA = 1.e-12;
+
+
+% Set Iterative Nonlinear Equation Solver Options
+
+options1 = mmfsolve('default');
+options1.MaxIter = 100;
+options1.Scale = 'on';
+options1.FunTol = 1.e-8;
+options1.Jacobian = 'finite';
+% options1.Jacobian = 'broyden';
+options1.Display = 'on';

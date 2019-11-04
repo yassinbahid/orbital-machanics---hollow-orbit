@@ -1,0 +1,87 @@
+function Pf = Traj_simulation(tf,S0)
+% Program Traj_simulation: This program will simulate trajectories of a
+% an object moving in the planar-restricted earth-moon system 
+% The simulation runs over dimensionless time span [0, tf] 
+% beginning from initial state S0 = [x0, y0, xdot0, ydot0]'.
+% Sample Commands:  
+%  >>Pf = Traj_simulation(6.19216933131963970674,[1.2,0,0,-1.04935750983031990726]')
+% 2-1-2011 Revision (BNL) to add libration point plots and axis equal
+
+% Input Section:
+
+% S(1) = input('Please input the initial x-position of object: x0=');
+% S(2) = input('Please input the initial y-position of object: y0=');
+% S(3) = input('Please input the initial x-velocity of object: Vx0=');
+% S(4) = input ('Please input the initial y-velocity of object: Vy0=');
+% S(5) = input('Please input tf:tf=');
+% S=S';
+% global S;
+% S0=[S(1),S(2),S(3),S(4)]';  % initial data without time component.
+% global SO;
+
+% Experimental Calculations:
+%t=0; % dummy variable
+%S_dot = state_dot_OC(t,S0);
+
+% [T,P]=ode45('state_dot',[0,tf],S0); % Run with default options
+
+global TOLR TOLA
+options1 = odeset('RelTol',TOLR,'AbsTol',TOLA);
+[T,P]=ode45('state_dot',[0,tf],S0,options1);  % run with new error tolerances
+% Above times on the interval [0,tf] are stored as one vector and the
+% corresponding values fitted to the ODE's are output and stored in matrix
+% P (P has 4 columns of values representing the four compnents of S0).
+
+Pf = P(end,:)';
+
+
+%plot(T,P(:,1)) % The first  component columns of P are plotted 
+% against time values to observe the position trajectory. 
+subplot(2,1,1)
+plot(P(:,1),P(:,2),'c') % The first two component columns of P are plotted 
+% against each other to observe the position trajectory. 
+title('Trajectory Plot')
+xlabel('x -axis (normalized units)')
+ylabel('y -axis (normalized units)')
+hold on
+plot(P(1,1),P(1,2),'ro')   % Initial Point
+plot(P(end,1),P(end,2),'g*') % End Point
+
+global U
+u = U;
+u1 = 1-u;
+plot(-u,0,'bo') % Earth
+plot(1-u,0,'cd') % Moon
+% Libration Points
+L(:,1) = [1.15559740258988      0 0 0]';
+L(:,2) = [0.83702354452395      0 0 0]'; 
+L(:,3) = [-1.00505347015937     0 0 0]';
+L(:,4) = [0.48787143723469   0.86602540378444   0 0]';
+L(:,5) = [0.48787143723469  -0.86602540378444   0 0]';
+
+plot(L(1,1),L(2,1),'c.') % L_1
+plot(L(1,2),L(2,2),'k.') % L_2
+plot(L(1,3),L(2,3),'y.') % L_3
+plot(L(1,4),L(2,4),'rd') % L_4
+plot(L(1,5),L(2,5),'md') % L_4
+legend('Trajectory','P_0','P_f','Earth','Moon', 'L_1','L_2','L_3','L_4','L_5')
+axis equal
+
+subplot(2,1,2)
+plot(P(:,3),P(:,4),'c') % The second two compent columns of P are plotted to 
+% observe the the velocity trajectory. 
+title('Velocity Plot')
+xlabel('v_x -axis (normalized units)')
+ylabel('v_y -axis (normalized units)')
+hold on
+plot(P(1,3),P(1,4),'ro')   % Initial Point
+plot(P(end,3),P(end,4),'g*') % End Point
+
+plot(0,0,'r.')
+
+
+
+
+
+
+
